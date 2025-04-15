@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>MiChat - Chat</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>💬 MiChat</h1>
+  <p>Bienvenido, <span id="usuarioNombre"></span></p>
+
+  <div id="mensajes" style="height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px;"></div>
+
+  <input type="text" id="mensaje" placeholder="Escribe tu mensaje..." autocomplete="off">
+  <button onclick="enviarMensaje()">Enviar</button>
+
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script>
+    const servidor = 'https://miagenda-backend.onrender.com'; // Cambia si tienes otra URL
+    const socket = io(servidor);
+    const usuario = localStorage.getItem('usuario');
+    document.getElementById('usuarioNombre').textContent = usuario;
+
+    // Cargar historial
+    fetch(`${servidor}/mensajes`)
+      .then(res => res.json())
+      .then(data => {
+        data.forEach(msg => {
+          mostrarMensaje(msg.usuario, msg.mensaje);
+        });
+      });
+
+    // Enviar mensaje
+    function enviarMensaje() {
+      const mensaje = document.getElementById('mensaje').value;
+      if (!mensaje.trim()) return;
+      socket.emit('mensaje', { usuario, mensaje });
+      document.getElementById('mensaje').value = '';
+    }
+
+    // Mostrar mensaje recibido
+    socket.on('mensaje', data => {
+      mostrarMensaje(data.usuario, data.mensaje);
+    });
+
+    // Mostrar mensaje en DOM
+    function mostrarMensaje(usuario, mensaje) {
+      const div = document.createElement('div');
+      div.innerHTML = `<b>${usuario}:</b> ${mensaje}`;
+      const contenedor = document.getElementById('mensajes');
+      contenedor.appendChild(div);
+      div.scrollIntoView();
+    }
+  </script>
+</body>
+</html>

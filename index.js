@@ -1,9 +1,9 @@
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
-const cors = require('cors');
-const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const cors = require('cors');
 const path = require('path');
 
 const Usuario = require('./models/Usuario');
@@ -12,15 +12,12 @@ const Mensaje = require('./models/Mensaje');
 const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http, {
-  cors: {
-    origin: '*'
-  }
+  cors: { origin: '*' }
 });
 
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET;
 
-// Conexión MongoDB
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('✅ Conectado a MongoDB Atlas'))
   .catch(err => console.error('❌ Error de conexión:', err.message));
@@ -31,7 +28,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // RUTA PRINCIPAL
 app.get('/', (req, res) => {
-  res.send('🌐 Servidor de chat en línea');
+  res.send('🌐 Servidor MiChat funcionando');
 });
 
 // REGISTRO
@@ -63,7 +60,17 @@ app.post('/login', async (req, res) => {
   res.json({ token, mensaje: 'Login exitoso' });
 });
 
-// SOCKET.IO — chat en tiempo real
+// HISTORIAL
+app.get('/mensajes', async (req, res) => {
+  try {
+    const mensajes = await Mensaje.find().sort({ fecha: 1 }).limit(100);
+    res.json(mensajes);
+  } catch (err) {
+    res.status(500).json({ mensaje: 'Error al obtener historial', error: err.message });
+  }
+});
+
+// SOCKET.IO CHAT
 io.on('connection', socket => {
   console.log('🟢 Usuario conectado al chat');
 
@@ -78,7 +85,6 @@ io.on('connection', socket => {
   });
 });
 
-// INICIAR SERVIDOR
 http.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
 });
